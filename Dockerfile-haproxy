@@ -1,0 +1,18 @@
+FROM haproxytech/haproxy-ubuntu:s6-latest
+
+# install envsubst (gettext-base) non-interactively and clean up
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gettext-base && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy config files into the image
+COPY ./haproxy/haproxy.cfg /usr/local/etc/haproxy/haproxy.cfg
+COPY ./haproxy/dataplaneapi.yml /usr/local/etc/haproxy/dataplaneapi.yml.template
+
+# Copy the startup script
+COPY ./haproxy/start-dataplane.sh /usr/local/bin/start-dataplane.sh
+RUN chmod +x /usr/local/bin/start-dataplane.sh
+
+# Set the entrypoint to render the config and start the container
+ENTRYPOINT ["/usr/local/bin/start-dataplane.sh"]

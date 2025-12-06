@@ -1,0 +1,40 @@
+services:
+  haproxy:
+    build:
+      context: .
+      dockerfile: Dockerfile-haproxy
+    container_name: haproxy
+    ports:
+      - "8888:80"
+      - "5555:5555"  # Port for HAProxy Data Plane API
+    environment:
+      DATAPLANE_PASSWORD: ${DATAPLANE_PASSWORD}
+    networks:
+      - haproxy-net
+
+  mariadb:
+    image: mariadb:latest
+    container_name: mariadb
+    environment:
+      MARIADB_ROOT_PASSWORD: root_password
+      MARIADB_DATABASE: haproxy_webui
+      MARIADB_USER: haproxy_web_user
+      MARIADB_PASSWORD: haproxy_web_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - haproxy-net
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+
+volumes:
+  mariadb_data:
+
+networks:
+  haproxy-net:
+    driver: bridge

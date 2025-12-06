@@ -1,0 +1,77 @@
+.container {
+  min-height: 100vh;
+  background: #f3f4f6;
+  padding: 2rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.title {
+  margin: 0 0 0.5rem;
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.userInfo {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.logoutBtn {
+  padding: 0.75rem 1.5rem;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.logoutBtn:hover {
+  background: #dc2626;
+}
+
+.main {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+}
+
+.section {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.section h2 {
+  margin: 0 0 1.5rem;
+  font-size: 1.25rem;
+  color: #111827;
+}
+
+.placeholder {
+  padding: 3rem 2rem;
+  text-align: center;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 2px dashed #d1d5db;
+}
+
+.placeholder p {
+  margin: 0;
+  color: #9ca3af;
+  font-size: 0.875rem;
+}
