@@ -53,6 +53,8 @@ This web app is built to consume data from the `HAProxy Data Plane API`
 
 ## Todo
 
+Protect the API as well.
+
 **Implement better-auth's handlers later:**
 The current implementation for the login and logout is a different implementation than better-auth's.
 
@@ -64,7 +66,37 @@ The current implementation for the login and logout is a different implementatio
 * Run in Docker: https://www.haproxy.com/documentation/haproxy-data-plane-api/installation/install-on-haproxy/#run-the-api-in-docker
 * Docker images: https://github.com/haproxytech?q=haproxy-docker-
 
+Dataplane API:
+* Github repo: https://github.com/haproxytech/dataplaneapi
+* Redoc: **http://localhost:5555/v3/docs***
+* API docs: https://www.haproxy.com/documentation/dataplaneapi/
+    - Open for quick inspection: https://editor.swagger.io/
+
 Verify that the Data Plane API is up and that authentication works (you will be prompted for the password):
 ~~~bash
 curl -X GET --user admin http://localhost:5555/v3/info
+# configurations
+curl -X GET --user admin "http://localhost:5555/v3/services/haproxy/configuration" | jq
+curl -X GET --user admin "http://localhost:5555/v3/services/haproxy/configuration/backends" | jq
+# stats
+curl -X GET --user admin "http://localhost:5555/v3/services/haproxy/stats/native" | jq
+curl -X GET --user admin "http://localhost:5555/v3/services/haproxy/stats/native?type=backend&name=db_be" | jq
 ~~~
+
+curl -X GET --user admin "http://localhost:5555/v3/services/haproxy/stats/native?type=backend&name=db_be" --cookie "cookie-with-auth-here" | jq
+
+
+## React notes
+
+For myself because I'm learning in the process of learning React.
+
+Components:
+
+* `app/admin/backendsList.tsx`
+    - Fetches backends from the database on mount
+    - Displays them in a simple list
+    - Shows loading and empty states
+    - Loaded via `app/admin/page.tsx`
+        - Simple refreshKey state (just a number)
+        - handleBackendCreated just increments the key
+        - The BackendsList component uses the key - when it changes, React unmounts and remounts it, causing a fresh fetch

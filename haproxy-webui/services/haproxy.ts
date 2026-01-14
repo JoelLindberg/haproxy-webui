@@ -29,3 +29,36 @@ export async function callDataplane(path: string, opts: RequestInit = {}) {
   }
   return res;
 }
+
+// New helper: fetch servers' status (and optional health) for a given backend
+export async function fetchBackendServers(backend: string, health = false) {
+  // Use the Data Plane API stats endpoint filtered by pxname (proxy/backend) and server type.
+  const path = `/v3/services/haproxy/stats?pxname=${encodeURIComponent(backend)}&type=server`;
+  const res = await callDataplane(path);
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Dataplane API error ${res.status}: ${body}`);
+  }
+
+  const stats: any[] = await res.json().catch(() => {
+    throw new Error("Failed to parse dataplane stats response as JSON");
+  });
+
+  // Map stats entries to a compact shape: { server, status, ...optional health fields }
+  return stats.map((s) => {
+    const serverName = s.svname ?? s.sname ?? s.name ?? "unknown";
+    const result: any = {
+      server: serverName,
+      status: s.status ?? null,
+    };
+    if (health) {
+      // include common health/check fields if present
+      if (s.check_status !== undefined) result.check_status = s.check_status;
+      if (s.check_state !== undefined) result.check_state = s.check_state;
+      if (s.health !== undefined) result.health = s.health;
+      if (s.last_chk !== undefined) result.last_check = s.last_chk;
+    }
+    return result;
+  });
+}

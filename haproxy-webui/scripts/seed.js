@@ -43,6 +43,16 @@ async function run() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
 
+  // Create haproxy_backends table
+  await conn.query(`
+    CREATE TABLE IF NOT EXISTS haproxy_backends (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(255) NOT NULL UNIQUE,
+      created_at DATETIME NOT NULL,
+      updated_at DATETIME NOT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
   const hashed = await hash(ADMIN_PASSWORD, 10);
   const now = new Date();
 
@@ -61,6 +71,30 @@ async function run() {
   );
 
   console.log(`✓ Admin user created/updated: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}`);
+
+  // Seed default backends
+  await conn.query(
+    `
+    INSERT INTO haproxy_backends (name, created_at, updated_at)
+    VALUES (?, NOW(), NOW())
+    ON DUPLICATE KEY UPDATE
+      updated_at = VALUES(updated_at)
+  `,
+    ["db_be"]
+  );
+
+  await conn.query(
+    `
+    INSERT INTO haproxy_backends (name, created_at, updated_at)
+    VALUES (?, NOW(), NOW())
+    ON DUPLICATE KEY UPDATE
+      updated_at = VALUES(updated_at)
+  `,
+    ["app_be"]
+  );
+
+  console.log(`✓ Default backends created/updated: db_be, app_be`);
+
   await conn.end();
 }
 

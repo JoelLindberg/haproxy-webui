@@ -52,16 +52,7 @@ export default function LoginPage() {
     }
   };
 
-  // optional quick test to check API reachability
-  const testPing = async () => {
-    try {
-      const r = await fetch("/api/ping");
-      const j = await r.json();
-      alert(`ping: ${r.status} ${JSON.stringify(j)}`);
-    } catch (e) {
-      alert(String(e));
-    }
-  };
+
 
   return (
     <div className={styles.container}>
@@ -102,19 +93,9 @@ export default function LoginPage() {
 
           {error && <p className={styles.error}>{error}</p>}
 
-          <div style={{ display: "flex", gap: 8 }}>
-            <button type="submit" className={styles.button} disabled={loading}>
-              {loading ? "Logging in..." : "Login"}
-            </button>
-            <button
-              type="button"
-              onClick={testPing}
-              className={styles.button}
-              style={{ background: "#6b7280" }}
-            >
-              Ping API
-            </button>
-          </div>
+          <button type="submit" className={styles.button} disabled={loading}>
+            {loading ? "Logging in..." : "Login"}
+          </button>
         </form>
       </div>
     </div>
