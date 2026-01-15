@@ -53,10 +53,9 @@ This web app is built to consume data from the `HAProxy Data Plane API`
 
 ## Todo
 
-Protect the API as well.
+**Implement better-auth's handlers**
 
-**Implement better-auth's handlers later:**
-The current implementation for the login and logout is a different implementation than better-auth's.
+The current implementation for the login and logout is a different implementation than better-auth's. It should be re-factored to follow their best practices instead.
 
 
 
@@ -68,19 +67,23 @@ The current implementation for the login and logout is a different implementatio
 
 Dataplane API:
 * Github repo: https://github.com/haproxytech/dataplaneapi
-* Redoc: **http://localhost:5555/v3/docs***
+* Redoc: **http://localhost:5555/v3/docs**
 * API docs: https://www.haproxy.com/documentation/dataplaneapi/
     - Open for quick inspection: https://editor.swagger.io/
 
 Verify that the Data Plane API is up and that authentication works (you will be prompted for the password):
 ~~~bash
 curl -X GET --user admin http://localhost:5555/v3/info
+curl -X GET --user admin "http://localhost:5555/v3/health" | jq
+curl -X GET --user admin "http://localhost:5555/v3/services/haproxy/runtime/info" | jq
+
 # configurations
 curl -X GET --user admin "http://localhost:5555/v3/services/haproxy/configuration" | jq
 curl -X GET --user admin "http://localhost:5555/v3/services/haproxy/configuration/backends" | jq
 # stats
 curl -X GET --user admin "http://localhost:5555/v3/services/haproxy/stats/native" | jq
 curl -X GET --user admin "http://localhost:5555/v3/services/haproxy/stats/native?type=backend&name=db_be" | jq
+
 ~~~
 
 curl -X GET --user admin "http://localhost:5555/v3/services/haproxy/stats/native?type=backend&name=db_be" --cookie "cookie-with-auth-here" | jq
