@@ -1,8 +1,17 @@
 # HAProxy Web UI
 
-Minimal HAProxy Web UI for manual backend server maintenance tasks
+Minimal HAProxy Web UI for manual backend server maintenance tasks.
 
-This web app is built to consume data from the `HAProxy Data Plane API`
+This web app is built to consume data from the `HAProxy Data Plane API`. It is by no mean intended to be anything else than a personal learning project at this point.
+
+Login page:
+
+[Screenshot](https://github.com/JoelLindberg/haproxy-webui/raw/assets/screenshots/login.png)
+
+
+Admin panel:
+
+[Screenshot](https://github.com/JoelLindberg/haproxy-webui/raw/assets/screenshots/admin.png)
 
 
 ## Environment
