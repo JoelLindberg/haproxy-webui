@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import styles from "./admin.module.css";
 import BackendDetails from "./backendDetails";
 
@@ -53,7 +54,24 @@ export default function BackendsList() {
     <>
       {backends.map((backend) => (
         <section key={backend.id} className={styles.section}>
-          <h2>Backend: {backend.name}</h2>
+          <h2>
+            Backend: {backend.name}
+            <Link
+              href={`/admin/edit?backend=${encodeURIComponent(backend.name)}`}
+              style={{
+                marginLeft: "0.5rem",
+                fontSize: "0.8em",
+                textDecoration: "none",
+                opacity: 0.7,
+                transition: "opacity 0.2s",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.7")}
+              title="Edit servers"
+            >
+              ✏️
+            </Link>
+          </h2>
           <BackendDetails backendName={backend.name} />
         </section>
       ))}

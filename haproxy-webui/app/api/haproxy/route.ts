@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { callDataplane, fetchBackendServers } from "@/services/haproxy";
+import { callDataplane, getBackendStats } from "@/services/haproxy";
 import { ensureAuthenticated } from "@/lib/serverAuth";
 
 /**
@@ -26,7 +26,7 @@ export async function GET(req: Request) {
     const includeHealth = ["1", "true", "yes"].includes(healthParam.toLowerCase());
 
     try {
-      const servers = await fetchBackendServers(backend, includeHealth);
+      const servers = await getBackendStats(backend, includeHealth);
       return NextResponse.json({ backend, servers });
     } catch (err) {
       return NextResponse.json(
@@ -37,6 +37,7 @@ export async function GET(req: Request) {
   }
 
   try {
+    // This provides a flexible way to call any Data Plane endpoint without creating specific routes for each one.
     const upstream = await callDataplane(path, { method: "GET" });
 
     const body = await upstream.text();

@@ -10,14 +10,24 @@ interface BackendData {
   status: string | null;
 }
 
+interface BackendServer {
+  name: string;
+  address: string;
+  port: number;
+  check: string;
+}
+
 interface BackendDetailsProps {
   backendName: string;
 }
 
 export default function BackendDetails({ backendName }: BackendDetailsProps) {
   const [data, setData] = useState<BackendData | null>(null);
+  const [servers, setServers] = useState<BackendServer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [serversLoading, setServersLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [serversError, setServersError] = useState<string | null>(null);
   const [notInHAProxy, setNotInHAProxy] = useState(false);
 
   useEffect(() => {
@@ -45,7 +55,27 @@ export default function BackendDetails({ backendName }: BackendDetailsProps) {
       }
     };
 
+    const fetchServers = async () => {
+      try {
+        const res = await fetch(
+          `/api/haproxy/backend/servers?parentName=${encodeURIComponent(backendName)}`
+        );
+        if (!res.ok) {
+          const json = await res.json();
+          setServersError(json.error || "Failed to fetch servers");
+          return;
+        }
+        const json = await res.json();
+        setServers(Array.isArray(json) ? json : []);
+      } catch (err) {
+        setServersError("Error fetching servers");
+      } finally {
+        setServersLoading(false);
+      }
+    };
+
     fetchBackend();
+    fetchServers();
   }, [backendName]);
 
   if (loading) return <div className={styles.placeholder}>Loading...</div>;
@@ -63,6 +93,7 @@ export default function BackendDetails({ backendName }: BackendDetailsProps) {
   if (!data) return <div className={styles.placeholder}>No data</div>;
 
   return (
+    <>
     <div className={styles.tableContainer}>
       <table className={styles.table}>
         <thead>
@@ -101,5 +132,39 @@ export default function BackendDetails({ backendName }: BackendDetailsProps) {
         </tbody>
       </table>
     </div>
+
+    
+      <h3 style={{ marginTop: "2rem", marginBottom: "1rem" }}>Servers</h3>
+      <div className={styles.tableContainer}>
+      {serversLoading ? (
+        <div className={styles.placeholder}>Loading servers...</div>
+      ) : serversError ? (
+        <div className={styles.placeholder}>Error loading servers: {serversError}</div>
+      ) : servers.length === 0 ? (
+        <div className={styles.placeholder}>No servers configured</div>
+      ) : (
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Address</th>
+              <th>Port</th>
+              <th>Health Check</th>
+            </tr>
+          </thead>
+          <tbody>
+            {servers.map((server, idx) => (
+              <tr key={idx}>
+                <td>{server.name}</td>
+                <td>{server.address}</td>
+                <td>{server.port}</td>
+                <td>{server.check ?? "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      </div>
+    </>
   );
 }

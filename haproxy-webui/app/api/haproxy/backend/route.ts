@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { callDataplane } from "@/services/haproxy";
+import { callDataplane, createBackend, getConfigurationVersion } from "@/services/haproxy";
 import { ensureAuthenticated } from "@/lib/serverAuth";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
@@ -60,7 +60,7 @@ export async function GET(req: Request) {
 
 /**
  * POST /api/haproxy/backend
- * Creates a new backend entry in the database.
+ * Creates a new backend entry in both HAProxy configuration and the database.
  */
 export async function POST(req: Request) {
   // enforce auth
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { name } = body;
+    const { name, mode } = body;
 
     if (!name || typeof name !== "string" || !name.trim()) {
       return NextResponse.json(
@@ -78,27 +78,52 @@ export async function POST(req: Request) {
       );
     }
 
-    // Insert backend into database
-    await db.execute(
-      sql`INSERT INTO haproxy_backends (name, created_at, updated_at) VALUES (${name.trim()}, NOW(), NOW())`
-    );
+    const backendName = name.trim();
+    const backendMode = mode && typeof mode === "string" ? mode : "http";
 
-    return NextResponse.json({
-      success: true,
-      message: "Backend created successfully",
-      name: name.trim(),
-    });
-  } catch (err: any) {
-    // Check for duplicate entry error
-    if (err.code === "ER_DUP_ENTRY") {
+    // Get current configuration version
+    const version = await getConfigurationVersion();
+
+    // Create backend in HAProxy configuration
+    try {
+      await createBackend(backendName, version, backendMode);
+    } catch (haproxyErr: any) {
       return NextResponse.json(
-        { error: "duplicate_entry", message: "Backend with this name already exists" },
-        { status: 409 }
+        { error: "haproxy_error", message: `Failed to create backend in HAProxy: ${haproxyErr.message}` },
+        { status: 500 }
       );
     }
 
+    // Insert backend into database
+    try {
+      await db.execute(
+        sql`INSERT INTO haproxy_backends (name, created_at, updated_at) VALUES (${backendName}, NOW(), NOW())`
+      );
+    } catch (dbErr: any) {
+      // Check for duplicate entry error
+      if (dbErr.code === "ER_DUP_ENTRY") {
+        return NextResponse.json(
+          { error: "duplicate_entry", message: "Backend with this name already exists in database" },
+          { status: 409 }
+        );
+      }
+      // If database insert fails, we should ideally rollback the HAProxy config
+      // For now, just return the error
+      return NextResponse.json(
+        { error: "database_error", message: `Backend created in HAProxy but database insert failed: ${String(dbErr)}` },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Backend created successfully in HAProxy and database",
+      name: backendName,
+      mode: backendMode,
+    });
+  } catch (err: any) {
     return NextResponse.json(
-      { error: "database_error", message: String(err) },
+      { error: "server_error", message: String(err) },
       { status: 500 }
     );
   }

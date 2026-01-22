@@ -14,7 +14,7 @@ This web app is built to consume data from the `HAProxy Data Plane API`. It is b
 
 
 
-## Environment
+## Development
 
 1. HAProxy Data Plane API password:
     * Option 1: `export DATAPLANE_PASSWORD='your-secure-password'`
@@ -28,11 +28,8 @@ This web app is built to consume data from the `HAProxy Data Plane API`. It is b
     # force rebuild (required if you make changes to the haproxy config files or the haproxy api password)
     `docker compose up --build`
     ~~~
-3. `npm install`
-    ~~~bash
-    npm install better-auth drizzle-orm drizzle-kit mysql2 bcryptjs dotenv jsonwebtoken
-    ~~~
-4. init the better-auth db with an admin user (only need to be run once): `npm run seed`
+3. `cd haproxy-webui/`
+4. `npm install`
 5. Create .env.local contains DB connection and BETTER_AUTH_SECRET.
     ~~~conf
     # MariaDB Database
@@ -55,7 +52,9 @@ This web app is built to consume data from the `HAProxy Data Plane API`. It is b
     ADMIN_EMAIL=admin@haproxy.local
     ADMIN_PASSWORD=admin123
     ~~~
-6. `npm run dev`
+6. init the better-auth db with an admin user (only need to be run once): `npm run seed`
+7. `npm run dev`
+8. Open [http://localhost:3000](http://localhost:3000) with your browser to login to the admin dashboard.
 
 
 
@@ -67,6 +66,7 @@ This web app is built to consume data from the `HAProxy Data Plane API`. It is b
 The current implementation for the login and logout is a different implementation than better-auth's. It should be re-factored to follow their best practices instead.
 
 
+## Rea
 
 
 ## HAProxy notes
@@ -93,12 +93,77 @@ curl -X GET --user admin "http://localhost:5555/v3/services/haproxy/configuratio
 curl -X GET --user admin "http://localhost:5555/v3/services/haproxy/stats/native" | jq
 curl -X GET --user admin "http://localhost:5555/v3/services/haproxy/stats/native?type=backend&name=db_be" | jq
 
+
+curl -X GET --user admin "http://localhost:5555/v3/services/haproxy/configuration/backends/app_be/servers" | jq
+
+# create a server in a backend
+# version or transaction id must be specified - must/should be incremented for each change? force_reload can also be set when using version
+curl -X POST --user admin "http://localhost:5555/v3/services/haproxy/configuration/backends/app_be/servers/?version=1" --json '{"address": "10.0.0.1", "name": "test", "port": 8888}' | jq
+
+# delete a server in a backend
+curl -X DELETE --user admin http://localhost:5555/v3/services/haproxy/configuration/backends/{parent_name}/servers/{name}
+
+# get current config version
+curl -X GET --user admin http://localhost:5555/v3/services/haproxy/configuration/version
+
+
+# add a backend
+curl -X POST --user admin http://localhost:5555/v3/services/haproxy/configuration/backends/?version=1 --json '{"name": "test_be", "mode": "http", "balance": {"algorithm": "roundrobin"}}' | jq
+
+
+# not tested yet
+curl -X GET --user admin "http://localhost:3000/haproxy/?name=db_be" --cookie "cookie-with-auth-here" | jq
+
 ~~~
 
-curl -X GET --user admin "http://localhost:5555/v3/services/haproxy/stats/native?type=backend&name=db_be" --cookie "cookie-with-auth-here" | jq
+
+HAProxy config file looked like this after inserting a test server. Note the md5hash and version:
+
+~~~conf
+root@cf1691c5c7cf:/usr/local/etc/haproxy# cat haproxy.cfg 
+# _md5hash=1b46427730d5e4435333826727a62042
+# _version=2
+# Dataplaneapi managed File
+# changing file directly can cause a conflict if dataplaneapi is running
+
+global
+  daemon
+  maxconn 256
+  log /dev/log local0
+  log /dev/log local1 notice
+
+defaults unnamed_defaults_1
+  mode http
+  timeout connect 5s
+  timeout client 50s
+  timeout server 50s
+
+frontend db_fe from unnamed_defaults_1
+  mode tcp
+  bind *:3306
+  default_backend db_be
+
+frontend http from unnamed_defaults_1
+  bind *:80
+  default_backend app_be
+
+backend app_be from unnamed_defaults_1
+  server app1 http-echo1:5678 check
+  server app2 http-echo2:5678 check
+  server test 10.0.0.1:8888
+
+backend db_be from unnamed_defaults_1
+  mode tcp
+  server db1 mariadb:3306 check
+~~~
 
 
-## React notes
+
+## Next/React notes
+
+~~~bash
+npm install better-auth drizzle-orm drizzle-kit mysql2 bcryptjs dotenv jsonwebtoken
+~~~
 
 For myself because I'm learning in the process of learning React.
 
