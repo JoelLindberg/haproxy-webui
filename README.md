@@ -12,6 +12,7 @@ This web app is built to consume data from the `HAProxy Data Plane API`. It is b
 
 ![Admin page of the web UI](https://github.com/JoelLindberg/haproxy-webui/raw/assets/screenshots/admin.png)
 
+![Admin page of the web UI](https://github.com/JoelLindberg/haproxy-webui/raw/assets/screenshots/admin-edit-backend.png)
 
 
 ## Development
