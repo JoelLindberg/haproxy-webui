@@ -10,8 +10,8 @@ import { sql } from "drizzle-orm";
  */
 export async function GET(req: Request) {
   // enforce auth
-  const auth = ensureAuthenticated(req);
-  if (auth) return auth;
+  const authError = await ensureAuthenticated(req);
+  if (authError) return authError;
 
   const url = new URL(req.url);
   const name = url.searchParams.get("name");
@@ -64,8 +64,8 @@ export async function GET(req: Request) {
  */
 export async function POST(req: Request) {
   // enforce auth
-  const auth = ensureAuthenticated(req);
-  if (auth) return auth;
+  const authError = await ensureAuthenticated(req);
+  if (authError) return authError;
 
   try {
     const body = await req.json();

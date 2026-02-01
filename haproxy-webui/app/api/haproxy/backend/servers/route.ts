@@ -9,8 +9,8 @@ import { ensureAuthenticated } from "@/lib/serverAuth";
  */
 export async function GET(req: Request) {
   // enforce auth
-  const auth = ensureAuthenticated(req);
-  if (auth) return auth;
+  const authError = await ensureAuthenticated(req);
+  if (authError) return authError;
 
   const url = new URL(req.url);
   const parentName = url.searchParams.get("parentName");
@@ -40,8 +40,8 @@ export async function GET(req: Request) {
  */
 export async function POST(req: Request) {
   // enforce auth
-  const auth = ensureAuthenticated(req);
-  if (auth) return auth;
+  const authError = await ensureAuthenticated(req);
+  if (authError) return authError;
 
   try {
     const body = await req.json();
@@ -109,8 +109,8 @@ export async function POST(req: Request) {
  */
 export async function DELETE(req: Request) {
   // enforce auth
-  const auth = ensureAuthenticated(req);
-  if (auth) return auth;
+  const authError = await ensureAuthenticated(req);
+  if (authError) return authError;
 
   try {
     const body = await req.json();

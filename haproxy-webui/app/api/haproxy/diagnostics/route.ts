@@ -9,8 +9,8 @@ import { ensureAuthenticated } from "@/lib/serverAuth";
  */
 export async function GET(req: Request) {
   // enforce auth
-  const auth = ensureAuthenticated(req);
-  if (auth) return auth;
+  const authError = await ensureAuthenticated(req);
+  if (authError) return authError;
 
   try {
     const diagnostics = await getDiagnostics();

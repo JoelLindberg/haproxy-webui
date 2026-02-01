@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { signIn } from "@/lib/auth-client";
 import styles from "./login.module.css";
 
 export default function LoginPage() {
@@ -17,33 +18,19 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/auth/sign-in/email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+      const { data, error: signInError } = await signIn.email({
+        email,
+        password,
       });
 
-      // debug logging for dev
-      console.log("signin response status:", response.status);
-      const text = await response.text();
-      try {
-        console.log("signin response json:", JSON.parse(text));
-      } catch {
-        console.log("signin response text:", text);
+      if (signInError) {
+        throw new Error(signInError.message || "Sign in failed");
       }
 
-      if (!response.ok) {
-        // try to extract JSON message if present, otherwise show text
-        let msg = text;
-        try {
-          const j = JSON.parse(text);
-          msg = j?.error ?? j?.message ?? JSON.stringify(j);
-        } catch {}
-        throw new Error(msg || `status ${response.status}`);
+      if (data) {
+        // success — navigate to admin
+        router.push("/admin");
       }
-
-      // success — navigate to admin
-      router.push("/admin");
     } catch (err) {
       console.error("login error:", err);
       setError(err instanceof Error ? err.message : String(err));

@@ -2,17 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "@/lib/auth-client";
 import styles from "./admin.module.css";
 import BackendCreate from "./backendCreate";
 import BackendsList from "./backendsList";
 import Diagnostics from "./diagnostics";
 import AdminHeader from "./adminHeader";
-
-interface User {
-  id?: string;
-  email?: string;
-  name?: string;
-}
 
 interface Backend {
   id: number;
@@ -23,37 +18,22 @@ interface Backend {
 
 export default function AdminPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
+  const { data: session, isPending } = useSession();
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const res = await fetch("/api/auth/session");
-        if (!res.ok) {
-          router.push("/login");
-          return;
-        }
-        const json = await res.json();
-        if (!json.user) {
-          router.push("/login");
-          return;
-        }
-      } catch {
-        router.push("/login");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkAuth();
-  }, [router]);
+    if (!isPending && !session) {
+      router.push("/login");
+    }
+  }, [session, isPending, router]);
 
   const handleBackendCreated = () => {
     setRefreshKey(prev => prev + 1);
   };
 
-  if (loading) return <div className={styles.container}>Loading...</div>;
+  if (isPending) return <div className={styles.container}>Loading...</div>;
+  
+  if (!session) return null; // Will redirect via useEffect
 
   return (
     <div className={styles.container}>

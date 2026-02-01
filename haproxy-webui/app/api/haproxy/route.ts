@@ -13,8 +13,8 @@ import { ensureAuthenticated } from "@/lib/serverAuth";
  */
 export async function GET(req: Request) {
   // enforce auth
-  const auth = ensureAuthenticated(req);
-  if (auth) return auth;
+  const authError = await ensureAuthenticated(req);
+  if (authError) return authError;
 
   const url = new URL(req.url);
   const path = url.searchParams.get("path") ?? "/v3/health";

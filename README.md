@@ -16,6 +16,7 @@ This web app is built to consume data from the `HAProxy Data Plane API`. It is b
 
 ## Development
 
+
 1. HAProxy Data Plane API password:
     * Option 1: `export DATAPLANE_PASSWORD='your-secure-password'`
     * Option 2 (recommended): Create an `.env` in the root of this repo folder (same as the docker-compose file) containing:
@@ -52,21 +53,18 @@ This web app is built to consume data from the `HAProxy Data Plane API`. It is b
     ADMIN_EMAIL=admin@haproxy.local
     ADMIN_PASSWORD=admin123
     ~~~
-6. init the better-auth db with an admin user (only need to be run once): `npm run seed`
-7. `npm run dev`
-8. Open [http://localhost:3000](http://localhost:3000) with your browser to login to the admin dashboard.
+6. Prep DB for haproxy_backends (creates the DB): `npm run seed`
+7. Prep DB for better-auth: `npx @better-auth/cli migrate`
+8. `npm run dev`
+9. Open [http://localhost:3000](http://localhost:3000) with your browser to login to the admin dashboard.
 
 
+To add users manually:
 
+* Insert directly into the database (Better Auth uses bcrypt for password hashing)
+* Use Better Auth's CLI tools
+* Create a custom admin script
 
-## Todo
-
-**Implement better-auth's handlers**
-
-The current implementation for the login and logout is a different implementation than better-auth's. It should be re-factored to follow their best practices instead.
-
-
-## Rea
 
 
 ## HAProxy notes
@@ -177,3 +175,16 @@ Components:
         - Simple refreshKey state (just a number)
         - handleBackendCreated just increments the key
         - The BackendsList component uses the key - when it changes, React unmounts and remounts it, causing a fresh fetch
+
+
+
+
+## LLM support
+
+### better-auth
+
+* https://www.better-auth.com/docs/introduction
+
+Example:
+
+`Read http://localhost:3000/llms.txt and help me implement authentication in my component`

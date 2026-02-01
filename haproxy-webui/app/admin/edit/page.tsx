@@ -1,8 +1,9 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
+import { useSession } from "@/lib/auth-client";
 import styles from "../admin.module.css";
 import CreateServer from "./createServer";
 import DeleteServer from "./deleteServer";
@@ -11,9 +12,25 @@ import ManageServerState from "./manageServerState";
 import AdminHeader from "../adminHeader";
 
 function EditContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const backend = searchParams.get("backend");
+  const { data: session, isPending } = useSession();
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  useEffect(() => {
+    if (!isPending && !session) {
+      router.push("/login");
+    }
+  }, [session, isPending, router]);
+
+  if (isPending) {
+    return <div className={styles.container}>Loading...</div>;
+  }
+
+  if (!session) {
+    return null; // Will redirect via useEffect
+  }
 
   if (!backend) {
     return (
