@@ -114,6 +114,58 @@ curl -X GET --user admin "http://localhost:3000/haproxy/?name=db_be" --cookie "c
 
 ~~~
 
+### stats
+
+Server stats:
+The stats endpoint has scur (current sessions) and qcur (current queued connections).
+
+
+### status and state
+
+* Status (UP/DOWN/STOPPING) - This is operational_state, the health check result - is the server actually responding?
+* State (READY/DRAIN/MAINT) - This is admin_state, the administrative setting - should HAProxy send traffic to it?
+
+State (admin_state):
+* 
+
+Status (operational_state):
+* UP - Green (server is healthy and receiving traffic)
+* DOWN - Red (server failed health checks)
+* STOPPING - Yellow/amber (server is in the process of stopping, typically during drain)
+
+
+
+Example:
+* Status = UP (green) means the health check is passing - the server is reachable and healthy
+* State = DRAIN (yellow) means the admin has told HAProxy to stop sending NEW traffic to this server
+
+
+
+More examples:
+admin_state (State column) - What you tell HAProxy to do:
+
+READY - Accept new connections
+DRAIN - Stop accepting NEW connections, but finish existing ones
+MAINT - Completely offline
+operational_state (Status column) - What HAProxy observes about the server's health:
+
+UP - Server is responding to health checks
+DOWN - Server is failing health checks
+STOPPING - Server is in the process of shutting down
+When you set a server to DRAIN:
+
+It will typically stay UP because it's still running and passing health checks
+It just won't receive any new connections
+Existing connections continue until they finish
+STOPPING is a transitional state that appears when:
+
+The server is actually shutting down
+Or all connections have drained and HAProxy is finalizing the stop
+
+
+
+
+### haproxy config
 
 HAProxy config file looked like this after inserting a test server. Note the md5hash and version:
 

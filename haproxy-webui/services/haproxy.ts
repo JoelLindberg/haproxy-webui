@@ -141,6 +141,64 @@ export async function getBackendServers(parentName: string) {
   return servers;
 }
 
+// Get a single server from a backend
+export async function getServer(backendName: string, serverName: string) {
+  const path = `/v3/services/haproxy/configuration/backends/${encodeURIComponent(backendName)}/servers/${encodeURIComponent(serverName)}`;
+  const res = await callDataplane(path);
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Dataplane API error ${res.status}: ${body}`);
+  }
+
+  const server = await res.json().catch(() => {
+    throw new Error("Failed to parse dataplane server response as JSON");
+  });
+
+  return server;
+}
+
+// Get runtime server information (includes admin_state and operational_state)
+export async function getRuntimeServers(backendName: string) {
+  const path = `/v3/services/haproxy/runtime/backends/${encodeURIComponent(backendName)}/servers`;
+  const res = await callDataplane(path);
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Dataplane API error ${res.status}: ${body}`);
+  }
+
+  const servers = await res.json().catch(() => {
+    throw new Error("Failed to parse runtime servers response as JSON");
+  });
+
+  return servers;
+}
+
+// Get server stats (includes current sessions, queued connections, etc.)
+export async function getServerStats(backendName: string) {
+  const path = `/v3/services/haproxy/stats/native?type=server&parent=${encodeURIComponent(backendName)}`;
+  const res = await callDataplane(path);
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Dataplane API error ${res.status}: ${body}`);
+  }
+
+  const data = await res.json().catch(() => {
+    throw new Error("Failed to parse server stats response as JSON");
+  });
+
+  // Return the stats array with relevant fields mapped
+  return (data.stats ?? []).map((s: { name: string; stats: { scur?: number; qcur?: number; stot?: number; status?: string } }) => ({
+    name: s.name,
+    currentSessions: s.stats?.scur ?? 0,
+    queuedConnections: s.stats?.qcur ?? 0,
+    totalSessions: s.stats?.stot ?? 0,
+    status: s.stats?.status ?? "unknown",
+  }));
+}
+
 // Get current configuration version
 export async function getConfigVersion() {
   const path = `/v3/services/haproxy/configuration/global`;
@@ -204,6 +262,30 @@ export async function createBackend(name: string, version: number, mode: string 
   return result;
 }
 
+// Delete a backend from HAProxy configuration
+export async function deleteBackend(name: string, version: number) {
+  const path = `/v3/services/haproxy/configuration/backends/${encodeURIComponent(name)}?version=${version}`;
+  const res = await callDataplane(path, {
+    method: "DELETE",
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Failed to delete backend: ${res.status} ${body}`);
+  }
+
+  // DELETE may return empty response or JSON
+  const result = await res.text().then((text) => {
+    try {
+      return text ? JSON.parse(text) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  return result;
+}
+
 // Create a new server in a backend
 export async function createServer(
   backendName: string,
@@ -263,5 +345,55 @@ export async function deleteServer(
     }
   });
   
+  return result;
+}
+
+// Replace/rename a server in a backend
+export async function replaceServer(
+  backendName: string,
+  oldServerName: string,
+  newServerData: any,
+  version: number
+) {
+  // Replace the server with the provided version using PUT
+  const path = `/v3/services/haproxy/configuration/backends/${encodeURIComponent(backendName)}/servers/${encodeURIComponent(oldServerName)}?version=${version}`;
+  const res = await callDataplane(path, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(newServerData),
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Failed to replace server: ${res.status} ${body}`);
+  }
+
+  const result = await res.json().catch(() => ({}));
+  return result;
+}
+
+// Change server admin state at runtime (ready, drain, maint)
+export async function setServerState(
+  backendName: string,
+  serverName: string,
+  adminState: "ready" | "drain" | "maint"
+) {
+  const path = `/v3/services/haproxy/runtime/backends/${encodeURIComponent(backendName)}/servers/${encodeURIComponent(serverName)}`;
+  const res = await callDataplane(path, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ admin_state: adminState }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Failed to set server state: ${res.status} ${body}`);
+  }
+
+  const result = await res.json().catch(() => ({}));
   return result;
 }

@@ -6,10 +6,10 @@ import Link from "next/link";
 import { useSession } from "@/lib/auth-client";
 import styles from "../admin.module.css";
 import CreateServer from "./createServer";
-import DeleteServer from "./deleteServer";
-import RenameServer from "./renameServer";
-import ManageServerState from "./manageServerState";
+import ManageServer from "./manageServer";
+import DeleteBackend from "./deleteBackend";
 import AdminHeader from "../adminHeader";
+import BackendDetails from "../backendDetails";
 
 function EditContent() {
   const router = useRouter();
@@ -17,6 +17,7 @@ function EditContent() {
   const backend = searchParams.get("backend");
   const { data: session, isPending } = useSession();
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     if (!isPending && !session) {
@@ -51,6 +52,10 @@ function EditContent() {
     setMessage(msg);
   };
 
+  const handleRefresh = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
+
   return (
     <div className={styles.container}>
       <AdminHeader />
@@ -70,10 +75,14 @@ function EditContent() {
         )}
 
         <div className={styles.editGrid}>
-          <CreateServer backendName={backend} onMessage={handleMessage} />
-          <DeleteServer backendName={backend} onMessage={handleMessage} />
-          <RenameServer backendName={backend} onMessage={handleMessage} />
-          <ManageServerState backendName={backend} onMessage={handleMessage} />
+          <div className={styles.editLeft}>
+            <CreateServer backendName={backend} onMessage={handleMessage} onSuccess={handleRefresh} />
+            <ManageServer backendName={backend} onMessage={handleMessage} onSuccess={handleRefresh} refreshTrigger={refreshTrigger} />
+            <DeleteBackend backendName={backend} onMessage={handleMessage} />
+          </div>
+          <div className={styles.editRight}>
+            <BackendDetails backendName={backend} refreshTrigger={refreshTrigger} />
+          </div>
         </div>
       </div>
     </div>

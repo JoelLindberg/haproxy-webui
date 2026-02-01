@@ -17,18 +17,37 @@ interface BackendServer {
   check: string;
 }
 
-interface BackendDetailsProps {
-  backendName: string;
+interface RuntimeServer {
+  name: string;
+  address: string;
+  port: number;
+  admin_state: "ready" | "drain" | "maint";
+  operational_state: "up" | "down" | "stopping";
+  currentSessions: number;
+  queuedConnections: number;
+  totalSessions: number;
 }
 
-export default function BackendDetails({ backendName }: BackendDetailsProps) {
+interface BackendDetailsProps {
+  backendName: string;
+  refreshTrigger?: number;
+}
+
+export default function BackendDetails({ backendName, refreshTrigger }: BackendDetailsProps) {
   const [data, setData] = useState<BackendData | null>(null);
   const [servers, setServers] = useState<BackendServer[]>([]);
+  const [runtimeServers, setRuntimeServers] = useState<RuntimeServer[]>([]);
   const [loading, setLoading] = useState(true);
   const [serversLoading, setServersLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [serversError, setServersError] = useState<string | null>(null);
   const [notInHAProxy, setNotInHAProxy] = useState(false);
+  const [manualRefresh, setManualRefresh] = useState(0);
+
+  const handleRefresh = () => {
+    setServersLoading(true);
+    setManualRefresh(prev => prev + 1);
+  };
 
   useEffect(() => {
     const fetchBackend = async () => {
@@ -57,16 +76,25 @@ export default function BackendDetails({ backendName }: BackendDetailsProps) {
 
     const fetchServers = async () => {
       try {
-        const res = await fetch(
-          `/api/haproxy/backend/servers?parentName=${encodeURIComponent(backendName)}`
-        );
-        if (!res.ok) {
-          const json = await res.json();
+        // Fetch both configuration and runtime server data
+        const [configRes, runtimeRes] = await Promise.all([
+          fetch(`/api/haproxy/backend/servers?parentName=${encodeURIComponent(backendName)}`),
+          fetch(`/api/haproxy/backend/servers/runtime?parentName=${encodeURIComponent(backendName)}`)
+        ]);
+        
+        if (!configRes.ok) {
+          const json = await configRes.json();
           setServersError(json.error || "Failed to fetch servers");
           return;
         }
-        const json = await res.json();
-        setServers(Array.isArray(json) ? json : []);
+        
+        const configJson = await configRes.json();
+        setServers(Array.isArray(configJson) ? configJson : []);
+        
+        if (runtimeRes.ok) {
+          const runtimeJson = await runtimeRes.json();
+          setRuntimeServers(Array.isArray(runtimeJson) ? runtimeJson : []);
+        }
       } catch (err) {
         setServersError("Error fetching servers");
       } finally {
@@ -76,7 +104,7 @@ export default function BackendDetails({ backendName }: BackendDetailsProps) {
 
     fetchBackend();
     fetchServers();
-  }, [backendName]);
+  }, [backendName, refreshTrigger, manualRefresh]);
 
   if (loading) return <div className={styles.placeholder}>Loading...</div>;
   if (error) return <div className={styles.placeholder}>Error: {error}</div>;
@@ -134,7 +162,17 @@ export default function BackendDetails({ backendName }: BackendDetailsProps) {
     </div>
 
     
-      <h3 style={{ marginTop: "2rem", marginBottom: "1rem" }}>Servers</h3>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "2rem", marginBottom: "1rem" }}>
+        <h3 style={{ margin: 0, color: "var(--text)" }}>Servers</h3>
+        <button
+          onClick={handleRefresh}
+          className={styles.refreshButton}
+          disabled={serversLoading}
+          title="Refresh server status"
+        >
+          {serversLoading ? "↻" : "↻"}
+        </button>
+      </div>
       <div className={styles.tableContainer}>
       {serversLoading ? (
         <div className={styles.placeholder}>Loading servers...</div>
@@ -149,18 +187,63 @@ export default function BackendDetails({ backendName }: BackendDetailsProps) {
               <th>Name</th>
               <th>Address</th>
               <th>Port</th>
-              <th>Health Check</th>
+              <th>Status</th>
+              <th>State</th>
+              <th>Connections</th>
             </tr>
           </thead>
           <tbody>
-            {servers.map((server, idx) => (
-              <tr key={idx}>
-                <td>{server.name}</td>
-                <td>{server.address}</td>
-                <td>{server.port}</td>
-                <td>{server.check ?? "—"}</td>
-              </tr>
-            ))}
+            {servers.map((server, idx) => {
+              const runtime = runtimeServers.find(r => r.name === server.name);
+              const operationalState = runtime?.operational_state ?? "unknown";
+              const adminState = runtime?.admin_state ?? "unknown";
+              const currentSessions = runtime?.currentSessions ?? 0;
+              const queuedConnections = runtime?.queuedConnections ?? 0;
+              
+              return (
+                <tr key={idx}>
+                  <td>{server.name}</td>
+                  <td>{server.address}</td>
+                  <td>{server.port}</td>
+                  <td>
+                    <span
+                      className={`${styles.statusBadge} ${
+                        operationalState === "up"
+                          ? styles.statusUp
+                          : operationalState === "down"
+                          ? styles.statusDown
+                          : operationalState === "stopping"
+                          ? styles.statusStopping
+                          : styles.statusUnknown
+                      }`}
+                    >
+                      {operationalState.toUpperCase()}
+                    </span>
+                  </td>
+                  <td>
+                    <span
+                      className={`${styles.stateBadge} ${
+                        adminState === "ready"
+                          ? styles.stateReady
+                          : adminState === "drain"
+                          ? styles.stateDrain
+                          : adminState === "maint"
+                          ? styles.stateMaint
+                          : ""
+                      }`}
+                    >
+                      {adminState === "maint" ? "MAINT" : adminState.toUpperCase()}
+                    </span>
+                  </td>
+                  <td>
+                    <span title={queuedConnections > 0 ? `${queuedConnections} queued` : undefined}>
+                      {currentSessions}
+                      {queuedConnections > 0 && <span style={{ color: "var(--warning)", marginLeft: "0.25rem" }}>+{queuedConnections}q</span>}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}

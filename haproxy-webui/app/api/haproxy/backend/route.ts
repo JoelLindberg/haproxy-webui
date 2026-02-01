@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { callDataplane, createBackend, getConfigurationVersion } from "@/services/haproxy";
+import { callDataplane, createBackend, deleteBackend, getConfigurationVersion } from "@/services/haproxy";
 import { ensureAuthenticated } from "@/lib/serverAuth";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
@@ -120,6 +120,67 @@ export async function POST(req: Request) {
       message: "Backend created successfully in HAProxy and database",
       name: backendName,
       mode: backendMode,
+    });
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: "server_error", message: String(err) },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * DELETE /api/haproxy/backend
+ * Deletes a backend from both HAProxy configuration and the database.
+ * Body: { name: string }
+ */
+export async function DELETE(req: Request) {
+  // enforce auth
+  const authError = await ensureAuthenticated(req);
+  if (authError) return authError;
+
+  try {
+    const body = await req.json();
+    const { name } = body;
+
+    if (!name || typeof name !== "string" || !name.trim()) {
+      return NextResponse.json(
+        { error: "invalid_parameter", message: "name is required and must be a non-empty string" },
+        { status: 400 }
+      );
+    }
+
+    const backendName = name.trim();
+
+    // Get current configuration version
+    const version = await getConfigurationVersion();
+
+    // Delete backend from HAProxy configuration
+    try {
+      await deleteBackend(backendName, version);
+    } catch (haproxyErr: any) {
+      return NextResponse.json(
+        { error: "haproxy_error", message: `Failed to delete backend from HAProxy: ${haproxyErr.message}` },
+        { status: 500 }
+      );
+    }
+
+    // Delete backend from database
+    try {
+      await db.execute(
+        sql`DELETE FROM haproxy_backends WHERE name = ${backendName}`
+      );
+    } catch (dbErr: any) {
+      return NextResponse.json(
+        { error: "database_error", message: `Backend deleted from HAProxy but database delete failed: ${String(dbErr)}` },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Backend deleted successfully from HAProxy and database",
+      name: backendName,
     });
   } catch (err: any) {
     return NextResponse.json(

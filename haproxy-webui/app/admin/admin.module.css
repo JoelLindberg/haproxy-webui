@@ -65,7 +65,7 @@
 .main {
   display: grid;
   gap: 2rem;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
 }
 
 .section {
@@ -145,6 +145,41 @@
 .statusDown {
   background: var(--status-down-bg);
   color: var(--status-down-color);
+}
+
+.statusStopping {
+  background: rgba(255, 193, 7, 0.2);
+  color: #d39e00;
+}
+
+.statusUnknown {
+  background: rgba(128, 128, 128, 0.15);
+  color: #666;
+}
+
+/* state badges for admin state (ready/drain/maint) */
+.stateBadge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.stateReady {
+  background: rgba(40, 167, 69, 0.15);
+  color: #28a745;
+}
+
+.stateDrain {
+  background: rgba(255, 193, 7, 0.2);
+  color: #d39e00;
+}
+
+.stateMaint {
+  background: rgba(220, 53, 69, 0.15);
+  color: #dc3545;
 }
 
 /* terminal-style code block */
@@ -315,6 +350,18 @@
   gap: 2rem;
 }
 
+.editLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.editRight {
+  position: sticky;
+  top: 1rem;
+  align-self: start;
+}
+
 .formSection {
   padding: 1.5rem;
   background: var(--surface);
@@ -338,6 +385,7 @@
   font-size: 1rem;
   cursor: pointer;
   transition: background 0.2s;
+  width: fit-content;
 }
 
 .button:hover:not(:disabled) {
@@ -356,6 +404,70 @@
 
 .dangerButton:hover:not(:disabled) {
   background: var(--danger-hover);
+}
+
+.warningText {
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  background: rgba(220, 53, 69, 0.1);
+  border: 1px solid var(--danger);
+  border-radius: 4px;
+  color: var(--danger);
+  font-size: 0.875rem;
+}
+
+/* Danger zone styling */
+.dangerZone {
+  padding: 1.5rem;
+  background: rgba(220, 53, 69, 0.05);
+  border: 2px solid var(--danger);
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.dangerZone h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1.125rem;
+  color: var(--danger);
+}
+
+.dangerText {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* Refresh button */
+.refreshButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 1.125rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.refreshButton:hover:not(:disabled) {
+  background: var(--border);
+}
+
+.refreshButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .backLink {

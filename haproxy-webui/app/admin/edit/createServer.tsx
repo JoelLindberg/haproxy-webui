@@ -6,9 +6,10 @@ import styles from "../admin.module.css";
 interface CreateServerProps {
   backendName: string;
   onMessage: (message: { type: "success" | "error"; text: string }) => void;
+  onSuccess?: () => void;
 }
 
-export default function CreateServer({ backendName, onMessage }: CreateServerProps) {
+export default function CreateServer({ backendName, onMessage, onSuccess }: CreateServerProps) {
   const [serverName, setServerName] = useState("");
   const [serverAddress, setServerAddress] = useState("");
   const [serverPort, setServerPort] = useState("80");
@@ -55,6 +56,7 @@ export default function CreateServer({ backendName, onMessage }: CreateServerPro
       setServerAddress("");
       setServerPort("80");
       setHealthCheck("enabled");
+      onSuccess?.();
     } catch (err) {
       onMessage({ type: "error", text: `Failed to create server: ${err}` });
     } finally {

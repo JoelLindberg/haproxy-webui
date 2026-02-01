@@ -44,6 +44,11 @@ export default function AdminPage() {
         <BackendsList key={refreshKey} />
 
         <section className={styles.section}>
+          <h2>Diagnostics</h2>
+          <Diagnostics />
+        </section>
+
+        <section className={styles.section}>
           <h2>Metrics</h2>
           <div className={styles.placeholder}>
             <p>Metrics dashboard coming soon...</p>
@@ -53,11 +58,6 @@ export default function AdminPage() {
         <section className={styles.section}>
           <h2>Create Backend</h2>
           <BackendCreate onBackendCreated={handleBackendCreated} />
-        </section>
-
-        <section className={styles.section}>
-          <h2>Diagnostics</h2>
-          <Diagnostics />
         </section>
 
       </main>
