@@ -79,6 +79,14 @@ Dataplane API:
 * API docs: https://www.haproxy.com/documentation/dataplaneapi/
     - Open for quick inspection: https://editor.swagger.io/
 
+**Metrics:**
+* Try the *haproxy prometheus exporter*
+  - Fetch metrics from this from the nextjs node backend
+  - Use `axios` for fetching and `parse-prometheus-text-format` for turning that text into a clean JSON object.
+
+* Available at: http://localhost:8405/metrics.
+
+
 Verify that the Data Plane API is up and that authentication works (you will be prompted for the password):
 ~~~bash
 curl -X GET --user admin http://localhost:5555/v3/info

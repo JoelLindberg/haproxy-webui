@@ -7,6 +7,7 @@ import styles from "./admin.module.css";
 import BackendCreate from "./backendCreate";
 import BackendsList from "./backendsList";
 import Diagnostics from "./diagnostics";
+import Metrics from "./metrics";
 import AdminHeader from "./adminHeader";
 
 interface Backend {
@@ -50,9 +51,7 @@ export default function AdminPage() {
 
         <section className={styles.section}>
           <h2>Metrics</h2>
-          <div className={styles.placeholder}>
-            <p>Metrics dashboard coming soon...</p>
-          </div>
+          <Metrics />
         </section>
 
         <section className={styles.section}>
