@@ -53,6 +53,10 @@ This web app is built to consume data from the `HAProxy Data Plane API`. It is b
     ADMIN_ID=admin-user-1
     ADMIN_EMAIL=admin@haproxy.local
     ADMIN_PASSWORD=admin123
+
+    # HAProxy Prometheus Exporter
+    HAPROXY_EXPORTER_PORT=8405
+    HAPROXY_METRICS_URL=http://localhost:8405/metrics
     ~~~
 6. Prep DB for haproxy_backends (creates the DB): `npm run seed`
 7. Prep DB for better-auth: `npx @better-auth/cli migrate`
