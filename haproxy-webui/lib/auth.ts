@@ -26,6 +26,7 @@ export const auth = betterAuth({
       maxAge: 60 * 5, // 5 minutes
     },
   },
+  trustedOrigins: ["http://localhost:3000", "http://127.0.0.1:3000"],
 });
 
 // Export the auth type for client-side type inference
