@@ -22,12 +22,19 @@ interface MetricsResponse {
   rawLength: number;
 }
 
+interface SessionMetric {
+  name: string;
+  type: "frontend" | "backend";
+  currentSessions: number;
+  maxSessions: number;
+  totalSessions: number;
+  sessionRate: number;
+}
+
 export default function Metrics() {
   const [data, setData] = useState<MetricsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [expandedMetrics, setExpandedMetrics] = useState<Set<string>>(new Set());
-  const [filter, setFilter] = useState("");
 
   const fetchMetrics = async () => {
     setLoading(true);
@@ -54,23 +61,86 @@ export default function Metrics() {
     fetchMetrics();
   }, []);
 
-  const toggleMetric = (name: string) => {
-    setExpandedMetrics((prev) => {
-      const next = new Set(prev);
-      if (next.has(name)) {
-        next.delete(name);
-      } else {
-        next.add(name);
-      }
-      return next;
-    });
+  const parseSessionMetrics = (): SessionMetric[] => {
+    if (!data) return [];
+
+    const metrics: SessionMetric[] = [];
+    const processedNames = new Set<string>();
+
+    // Find relevant metrics
+    const currentSessionsMetric = data.metrics.find(m => m.name === "haproxy_frontend_current_sessions" || m.name === "haproxy_backend_current_sessions");
+    const maxSessionsMetric = data.metrics.find(m => m.name === "haproxy_frontend_max_sessions" || m.name === "haproxy_backend_max_sessions");
+    const totalSessionsMetric = data.metrics.find(m => m.name === "haproxy_frontend_sessions_total" || m.name === "haproxy_backend_sessions_total");
+    const sessionRateMetric = data.metrics.find(m => m.name === "haproxy_frontend_current_session_rate" || m.name === "haproxy_backend_current_session_rate");
+
+    // Process frontends
+    const frontendCurrentSessions = data.metrics.find(m => m.name === "haproxy_frontend_current_sessions");
+    if (frontendCurrentSessions) {
+      frontendCurrentSessions.metrics.forEach(sample => {
+        const name = sample.labels.proxy || "unknown";
+        if (!processedNames.has(`frontend_${name}`)) {
+          processedNames.add(`frontend_${name}`);
+          
+          const maxSessions = data.metrics
+            .find(m => m.name === "haproxy_frontend_max_sessions")
+            ?.metrics.find(s => s.labels.proxy === name)?.value || "0";
+          
+          const totalSessions = data.metrics
+            .find(m => m.name === "haproxy_frontend_sessions_total")
+            ?.metrics.find(s => s.labels.proxy === name)?.value || "0";
+          
+          const sessionRate = data.metrics
+            .find(m => m.name === "haproxy_frontend_current_session_rate")
+            ?.metrics.find(s => s.labels.proxy === name)?.value || "0";
+
+          metrics.push({
+            name,
+            type: "frontend",
+            currentSessions: parseInt(sample.value) || 0,
+            maxSessions: parseInt(maxSessions) || 0,
+            totalSessions: parseInt(totalSessions) || 0,
+            sessionRate: parseFloat(sessionRate) || 0,
+          });
+        }
+      });
+    }
+
+    // Process backends
+    const backendCurrentSessions = data.metrics.find(m => m.name === "haproxy_backend_current_sessions");
+    if (backendCurrentSessions) {
+      backendCurrentSessions.metrics.forEach(sample => {
+        const name = sample.labels.proxy || "unknown";
+        if (!processedNames.has(`backend_${name}`)) {
+          processedNames.add(`backend_${name}`);
+          
+          const maxSessions = data.metrics
+            .find(m => m.name === "haproxy_backend_max_sessions")
+            ?.metrics.find(s => s.labels.proxy === name)?.value || "0";
+          
+          const totalSessions = data.metrics
+            .find(m => m.name === "haproxy_backend_sessions_total")
+            ?.metrics.find(s => s.labels.proxy === name)?.value || "0";
+          
+          const sessionRate = data.metrics
+            .find(m => m.name === "haproxy_backend_current_session_rate")
+            ?.metrics.find(s => s.labels.proxy === name)?.value || "0";
+
+          metrics.push({
+            name,
+            type: "backend",
+            currentSessions: parseInt(sample.value) || 0,
+            maxSessions: parseInt(maxSessions) || 0,
+            totalSessions: parseInt(totalSessions) || 0,
+            sessionRate: parseFloat(sessionRate) || 0,
+          });
+        }
+      });
+    }
+
+    return metrics;
   };
 
-  const filteredMetrics = data?.metrics.filter(
-    (m) =>
-      m.name.toLowerCase().includes(filter.toLowerCase()) ||
-      m.help.toLowerCase().includes(filter.toLowerCase())
-  );
+  const sessionMetrics = parseSessionMetrics();
 
   if (loading) {
     return (
@@ -106,140 +176,74 @@ export default function Metrics() {
 
   return (
     <div>
-      <div className={styles.diagnosticsGrid} style={{ marginBottom: "1rem" }}>
-        <div className={styles.diagnosticItem}>
-          <span className={styles.diagnosticLabel}>Total Metrics</span>
-          <span className={styles.diagnosticValue}>{data.metricsCount}</span>
-        </div>
-        <div className={styles.diagnosticItem}>
-          <span className={styles.diagnosticLabel}>Raw Size</span>
-          <span className={styles.diagnosticValue}>
-            {(data.rawLength / 1024).toFixed(1)} KB
-          </span>
-        </div>
-      </div>
-
-      <div style={{ marginBottom: "1rem" }}>
-        <input
-          type="text"
-          placeholder="Filter metrics by name or description..."
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "0.5rem",
-            borderRadius: "4px",
-            border: "1px solid #ccc",
-            fontSize: "0.9rem",
-          }}
-        />
-      </div>
-
-      <div style={{ marginBottom: "1rem" }}>
+      <div style={{ marginBottom: "1rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h2 style={{ margin: 0 }}>Session Metrics</h2>
         <button onClick={fetchMetrics} className={styles.button}>
           Refresh Metrics
         </button>
       </div>
 
-      <div
-        style={{
-          maxHeight: "500px",
-          overflowY: "auto",
-          border: "1px solid #ddd",
-          borderRadius: "4px",
-        }}
-      >
-        {filteredMetrics && filteredMetrics.length > 0 ? (
-          filteredMetrics.map((metric) => (
-            <div
-              key={metric.name}
-              style={{
-                borderBottom: "1px solid #eee",
-                padding: "0.5rem",
-              }}
-            >
-              <div
-                onClick={() => toggleMetric(metric.name)}
-                style={{
-                  cursor: "pointer",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <div>
-                  <strong style={{ fontFamily: "monospace", fontSize: "0.85rem" }}>
+      <div style={{ overflowX: "auto" }}>
+        <table className={styles.metricsTable}>
+          <thead>
+            <tr>
+              <th className={styles.metricsTableHeaderRight}>Name</th>
+              <th>Type</th>
+              <th className={styles.metricsTableHeaderRight}>Current Sessions</th>
+              <th className={styles.metricsTableHeaderRight}>Max Sessions</th>
+              <th className={styles.metricsTableHeaderRight}>Total Sessions</th>
+              <th className={styles.metricsTableHeaderRight}>Session Rate</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sessionMetrics.length > 0 ? (
+              sessionMetrics.map((metric, idx) => (
+                <tr key={`${metric.type}_${metric.name}`}>
+                  <td className={styles.metricsTableName}>
                     {metric.name}
-                  </strong>
-                  <span
-                    style={{
-                      marginLeft: "0.5rem",
+                  </td>
+                  <td>
+                    <span style={{
+                      padding: "4px 8px",
+                      borderRadius: "4px",
                       fontSize: "0.75rem",
-                      color: "#666",
-                      backgroundColor: "#f0f0f0",
-                      padding: "0.1rem 0.3rem",
-                      borderRadius: "3px",
-                    }}
-                  >
-                    {metric.type}
-                  </span>
-                </div>
-                <span style={{ fontSize: "0.8rem", color: "#888" }}>
-                  {metric.metrics.length} sample{metric.metrics.length !== 1 ? "s" : ""}{" "}
-                  {expandedMetrics.has(metric.name) ? "▼" : "▶"}
-                </span>
-              </div>
-              {metric.help && (
-                <div style={{ fontSize: "0.8rem", color: "#666", marginTop: "0.25rem" }}>
-                  {metric.help}
-                </div>
-              )}
-              {expandedMetrics.has(metric.name) && (
-                <div
-                  style={{
-                    marginTop: "0.5rem",
-                    paddingLeft: "1rem",
-                    fontSize: "0.8rem",
-                    backgroundColor: "#f9f9f9",
-                    borderRadius: "4px",
-                    padding: "0.5rem",
-                    maxHeight: "200px",
-                    overflowY: "auto",
-                  }}
-                >
-                  {metric.metrics.map((sample, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        fontFamily: "monospace",
-                        marginBottom: "0.25rem",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        gap: "1rem",
-                      }}
-                    >
-                      <span style={{ color: "#555", wordBreak: "break-all" }}>
-                        {Object.keys(sample.labels).length > 0
-                          ? `{${Object.entries(sample.labels)
-                              .map(([k, v]) => `${k}="${v}"`)
-                              .join(", ")}}`
-                          : "(no labels)"}
-                      </span>
-                      <span style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
-                        {sample.value}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))
-        ) : (
-          <p style={{ padding: "1rem", color: "#666" }}>
-            No metrics found matching filter.
-          </p>
-        )}
+                      fontWeight: 600,
+                      backgroundColor: metric.type === "frontend" ? "#e3f2fd" : "#f3e5f5",
+                      color: metric.type === "frontend" ? "#1976d2" : "#7b1fa2"
+                    }}>
+                      {metric.type}
+                    </span>
+                  </td>
+                  <td className={styles.metricsTableCellRight} style={{ fontWeight: 600 }}>
+                    {metric.currentSessions.toLocaleString()}
+                  </td>
+                  <td className={styles.metricsTableCellRight}>
+                    {metric.maxSessions.toLocaleString()}
+                  </td>
+                  <td className={styles.metricsTableCellRight}>
+                    {metric.totalSessions.toLocaleString()}
+                  </td>
+                  <td className={styles.metricsTableCellRight}>
+                    {metric.sessionRate.toFixed(2)}
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={6} style={{ padding: "24px", textAlign: "center", color: "var(--subtext)" }}>
+                  No session metrics available
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
+
+      {data && (
+        <div style={{ marginTop: "1rem", fontSize: "0.85rem", color: "#6c757d" }}>
+          Total metrics: {data.metricsCount} | Raw size: {(data.rawLength / 1024).toFixed(1)} KB
+        </div>
+      )}
     </div>
   );
 }

@@ -89,6 +89,7 @@ Dataplane API:
   - Use `axios` for fetching and `parse-prometheus-text-format` for turning that text into a clean JSON object.
 
 * Available at: http://localhost:8405/metrics.
+* Docs: https://www.haproxy.com/documentation/haproxy-configuration-tutorials/alerts-and-monitoring/prometheus/
 
 
 Verify that the Data Plane API is up and that authentication works (you will be prompted for the password):

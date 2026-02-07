@@ -81,6 +81,21 @@
   color: var(--text);
 }
 
+.fullWidthSection {
+  background: var(--surface);
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+  width: 100%;
+}
+
+.fullWidthSection h2 {
+  margin: 0 0 1.5rem;
+  font-size: 1.25rem;
+  color: var(--text);
+}
+
 /* placeholder */
 .placeholder {
   padding: 3rem 2rem;
@@ -125,6 +140,149 @@
 
 .table tr:hover {
   background: rgba(0, 0, 0, 0.02);
+}
+
+.metricsTable {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.metricsTable thead tr {
+  background-color: var(--table-header-bg);
+  border-bottom: 2px solid var(--border);
+}
+
+.metricsTable thead th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.metricsTable tbody td {
+  padding: 12px;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+
+.metricsTable tbody tr:nth-child(even) {
+  background-color: var(--placeholder-bg);
+}
+
+.metricsTableHeaderRight {
+  text-align: right;
+}
+
+.metricsTableCellRight {
+  text-align: right;
+}
+
+.metricsTableName {
+  font-family: monospace;
+  font-size: 0.9rem;
+}
+
+/* metricsRaw component styles */
+.metricsRawContainer {
+  max-height: 500px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+}
+
+.metricsRawItem {
+  border-bottom: 1px solid var(--border);
+  padding: 0.5rem;
+}
+
+.metricsRawHeader {
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.metricsRawName {
+  font-family: monospace;
+  font-size: 0.85rem;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.metricsRawType {
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--surface);
+  background-color: var(--muted);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+}
+
+.metricsRawSampleCount {
+  font-size: 0.8rem;
+  color: var(--subtext);
+}
+
+.metricsRawHelp {
+  font-size: 0.8rem;
+  color: var(--subtext);
+  margin-top: 0.25rem;
+}
+
+.metricsRawExpandedData {
+  margin-top: 0.5rem;
+  padding-left: 1rem;
+  font-size: 0.8rem;
+  background-color: var(--placeholder-bg);
+  border-radius: 4px;
+  padding: 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.metricsRawSample {
+  font-family: monospace;
+  margin-bottom: 0.25rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--text);
+}
+
+.metricsRawSampleLabel {
+  word-break: break-all;
+  color: var(--subtext);
+}
+
+.metricsRawSampleValue {
+  font-weight: bold;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+.metricsRawNoResults {
+  padding: 1rem;
+  color: var(--subtext);
+}
+
+.metricsRawFilterInput {
+  width: 100%;
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  font-size: 0.9rem;
+  color: var(--text);
+  background-color: var(--surface);
+  margin-bottom: 1rem;
+}
+
+.metricsRawFilterInput::placeholder {
+  color: var(--muted);
 }
 
 /* status badges */
@@ -518,4 +676,35 @@
   background: var(--status-down-bg);
   color: var(--status-down-color);
   border-color: #f5c6cb;
+}
+
+/* Diagnostics grid */
+.diagnosticsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.diagnosticItem {
+  background: var(--surface);
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.diagnosticLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--subtext);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.diagnosticValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
 }
