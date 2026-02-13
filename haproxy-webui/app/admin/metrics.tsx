@@ -59,6 +59,13 @@ export default function Metrics() {
 
   useEffect(() => {
     fetchMetrics();
+
+    // Auto-refresh every 15 seconds
+    const intervalId = setInterval(() => {
+      fetchMetrics();
+    }, 15000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   const parseSessionMetrics = (): SessionMetric[] => {
@@ -177,9 +184,16 @@ export default function Metrics() {
   return (
     <div>
       <div style={{ marginBottom: "1rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h2 style={{ margin: 0 }}>Session Metrics</h2>
-        <button onClick={fetchMetrics} className={styles.button}>
-          Refresh Metrics
+        <h2 style={{ margin: 0 }}>
+          Metrics <span style={{ fontSize: "0.75rem", fontWeight: "normal", color: "var(--text)" }}>(Updates every 15 seconds)</span>
+        </h2>
+        <button
+          onClick={fetchMetrics}
+          className={styles.refreshButton}
+          disabled={loading}
+          title="Refresh metrics"
+        >
+          ↻
         </button>
       </div>
 

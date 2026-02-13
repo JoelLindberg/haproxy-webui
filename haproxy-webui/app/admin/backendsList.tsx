@@ -71,6 +71,21 @@ export default function BackendsList() {
             >
               ✏️
             </Link>
+            <Link
+              href={`/admin/metrics?backend=${encodeURIComponent(backend.name)}`}
+              style={{
+                marginLeft: "0.5rem",
+                fontSize: "0.8em",
+                textDecoration: "none",
+                opacity: 0.7,
+                transition: "opacity 0.2s",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.7")}
+              title="View metrics"
+            >
+              📊
+            </Link>
           </h2>
           <BackendDetails backendName={backend.name} />
         </section>

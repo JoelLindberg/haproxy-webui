@@ -9,7 +9,7 @@ import BackendsList from "./backendsList";
 import Diagnostics from "./diagnostics";
 import Metrics from "./metrics";
 import AdminHeader from "./adminHeader";
-import ServerConnGraph from "./serverConnGraph";
+import TopServerConnGraph from "./topServerConnGraph";
 import MetricsRaw from "./metricsRaw";
 
 interface Backend {
@@ -44,7 +44,7 @@ export default function AdminPage() {
 
       <section className={styles.fullWidthSection}>
         <h2>Server Connections</h2>
-        <ServerConnGraph />
+        <TopServerConnGraph />
       </section>
 
       <main className={styles.main}>

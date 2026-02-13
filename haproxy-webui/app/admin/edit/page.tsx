@@ -10,6 +10,7 @@ import ManageServer from "./manageServer";
 import DeleteBackend from "./deleteBackend";
 import AdminHeader from "../adminHeader";
 import BackendDetails from "../backendDetails";
+import ServerConnGraph from "../metrics/serverConnGraph";
 
 function EditContent() {
   const router = useRouter();
@@ -82,6 +83,9 @@ function EditContent() {
           </div>
           <div className={styles.editRight}>
             <BackendDetails backendName={backend} refreshTrigger={refreshTrigger} />
+            <div style={{ marginTop: "2rem" }}>
+              <ServerConnGraph backendName={backend} refreshTrigger={refreshTrigger} />
+            </div>
           </div>
         </div>
       </div>

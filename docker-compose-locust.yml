@@ -1,0 +1,15 @@
+services:
+  locust:
+    image: locustio/locust
+    container_name: locust
+    ports:
+      - "8089:8089"
+    volumes:
+      - ./locust:/mnt/locust
+    command: -f /mnt/locust/locustfile.py --host http://haproxy:80 --users 150 --spawn-rate 1 --headless
+    networks:
+      - haproxy-net
+
+networks:
+  haproxy-net:
+    driver: bridge
