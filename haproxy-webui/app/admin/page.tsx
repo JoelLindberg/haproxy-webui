@@ -9,6 +9,8 @@ import BackendsList from "./backendsList";
 import Diagnostics from "./diagnostics";
 import Metrics from "./metrics";
 import AdminHeader from "./adminHeader";
+import TopServerConnGraph from "./topServerConnGraph";
+import MetricsRaw from "./metricsRaw";
 
 interface Backend {
   id: number;
@@ -40,6 +42,11 @@ export default function AdminPage() {
     <div className={styles.container}>
       <AdminHeader />
 
+      <section className={styles.fullWidthSection}>
+        <h2>Server Connections</h2>
+        <TopServerConnGraph />
+      </section>
+
       <main className={styles.main}>
 
         <BackendsList key={refreshKey} />
@@ -52,6 +59,11 @@ export default function AdminPage() {
         <section className={styles.section}>
           <h2>Metrics</h2>
           <Metrics />
+        </section>
+
+        <section className={styles.section}>
+          <h2>Metrics Raw</h2>
+          <MetricsRaw />
         </section>
 
         <section className={styles.section}>

@@ -36,7 +36,7 @@ This web app is built to consume data from the `HAProxy Data Plane API`. It is b
     ~~~conf
     # MariaDB Database
     DB_HOST=localhost
-    DB_PORT=3306
+    DB_PORT=3307
     DB_USER=haproxy_web_user
     DB_PASSWORD=haproxy_web_password
     DB_NAME=haproxy_webui
@@ -71,6 +71,12 @@ To add users manually:
 * Create a custom admin script
 
 
+### Create some load
+
+Spin up locust to create some traffic:
+
+1. `docker compose -f docker-compose-locust.yml up`
+
 
 ## HAProxy notes
 
@@ -89,6 +95,7 @@ Dataplane API:
   - Use `axios` for fetching and `parse-prometheus-text-format` for turning that text into a clean JSON object.
 
 * Available at: http://localhost:8405/metrics.
+* Docs: https://www.haproxy.com/documentation/haproxy-configuration-tutorials/alerts-and-monitoring/prometheus/
 
 
 Verify that the Data Plane API is up and that authentication works (you will be prompted for the password):
@@ -131,6 +138,40 @@ curl -X GET --user admin "http://localhost:3000/haproxy/?name=db_be" --cookie "c
 
 Server stats:
 The stats endpoint has scur (current sessions) and qcur (current queued connections).
+
+
+**Sessions vs Connections in HAProxy Backend Metrics**
+
+Sessions (scur - current sessions):
+
+* Application-layer (HTTP) metric
+* Represents active HTTP requests currently being processed by the backend server
+* One session = one HTTP request/response transaction
+* Multiple sessions can be multiplexed over a single TCP connection (with HTTP keep-alive or HTTP/2)
+
+Connections (qcur - queued connections):
+
+* Represents connections/requests waiting in the queue
+* These are requests that cannot be immediately processed because the backend server is at capacity
+* Indicates backpressure - when qcur > 0, it means the backend is struggling to keep up
+
+**Key takeaway**: scur shows how busy the server is right now, while qcur shows how many requests are waiting - a high qcur is a warning sign that you may need more backend capacity.
+
+
+#### Sessions
+
+* `serverSessGraph.tsx` tracks the previous total for each server and calculates (current_total - prev_total) / elapsed_seconds
+* First data point is skipped (needs two readings to compute a delta)
+* Y-axis now shows "Sessions / sec" instead of raw session count
+* We call this "Server Session Rate"
+
+
+
+Other interesting stats:
+
+* haproxy_server_sessions_total (stot)
+  - A counter that only goes up, so it would show accumulated traffic regardless of timing
+
 
 
 ### status and state
