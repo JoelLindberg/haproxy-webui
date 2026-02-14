@@ -3,7 +3,8 @@ name: gitleaks
 on:
   push:
     branches-ignore:
-      - 'main' # Let the PR trigger handle main to avoid double-runs
+      - main # Let the PR trigger handle main to avoid double-runs
+      - assets
   pull_request:
     branches:
       - main
