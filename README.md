@@ -14,6 +14,12 @@ This web app is built to consume data from the `HAProxy Data Plane API`. It is b
 
 ![Admin page of the web UI](https://github.com/JoelLindberg/haproxy-webui/raw/assets/screenshots/admin-edit-backend.png)
 
+![Admin page - Edit backend](https://github.com/JoelLindberg/haproxy-webui/raw/assets/screenshots/admin-edit-backend.png)
+
+![Admin page - Diagnostics and metrics](https://github.com/JoelLindberg/haproxy-webui/raw/assets/screenshots/admin-diag-and-metrics.png)
+
+![Admin page - Metrics explorer and create backend](https://github.com/JoelLindberg/haproxy-webui/raw/assets/screenshots/admin-metrics-explorer-and-create-be.png)
+
 
 ## Development
 
@@ -78,6 +84,7 @@ Spin up locust to create some traffic:
 1. `docker compose -f docker-compose-locust.yml up`
 
 
+
 ## HAProxy notes
 
 * Run in Docker: https://www.haproxy.com/documentation/haproxy-data-plane-api/installation/install-on-haproxy/#run-the-api-in-docker
@@ -98,7 +105,7 @@ Dataplane API:
 * Docs: https://www.haproxy.com/documentation/haproxy-configuration-tutorials/alerts-and-monitoring/prometheus/
 
 
-Verify that the Data Plane API is up and that authentication works (you will be prompted for the password):
+A few example requests to the HAProxy Data Plane API:
 ~~~bash
 curl -X GET --user admin http://localhost:5555/v3/info
 curl -X GET --user admin "http://localhost:5555/v3/health" | jq
@@ -107,11 +114,10 @@ curl -X GET --user admin "http://localhost:5555/v3/services/haproxy/runtime/info
 # configurations
 curl -X GET --user admin "http://localhost:5555/v3/services/haproxy/configuration" | jq
 curl -X GET --user admin "http://localhost:5555/v3/services/haproxy/configuration/backends" | jq
+
 # stats
 curl -X GET --user admin "http://localhost:5555/v3/services/haproxy/stats/native" | jq
 curl -X GET --user admin "http://localhost:5555/v3/services/haproxy/stats/native?type=backend&name=db_be" | jq
-
-
 curl -X GET --user admin "http://localhost:5555/v3/services/haproxy/configuration/backends/app_be/servers" | jq
 
 # create a server in a backend
@@ -124,15 +130,25 @@ curl -X DELETE --user admin http://localhost:5555/v3/services/haproxy/configurat
 # get current config version
 curl -X GET --user admin http://localhost:5555/v3/services/haproxy/configuration/version
 
-
 # add a backend
 curl -X POST --user admin http://localhost:5555/v3/services/haproxy/configuration/backends/?version=1 --json '{"name": "test_be", "mode": "http", "balance": {"algorithm": "roundrobin"}}' | jq
-
-
-# not tested yet
-curl -X GET --user admin "http://localhost:3000/haproxy/?name=db_be" --cookie "cookie-with-auth-here" | jq
-
 ~~~
+
+
+### haproxy config
+
+An example snippet from the HAProxy config after inserting a backend server via the Data Plane API. Note the md5hash and version:
+
+~~~conf
+root@cf1691c5c7cf:/usr/local/etc/haproxy# cat haproxy.cfg 
+# _md5hash=1b46427730d5e4435333826727a62042
+# _version=2
+# Dataplaneapi managed File
+# changing file directly can cause a conflict if dataplaneapi is running
+~~~
+
+*This is clearly indicating that the config file is being managed and should not be manually tampered with.*
+
 
 ### stats
 
@@ -164,7 +180,6 @@ Connections (qcur - queued connections):
 * First data point is skipped (needs two readings to compute a delta)
 * Y-axis now shows "Sessions / sec" instead of raw session count
 * We call this "Server Session Rate"
-
 
 
 Other interesting stats:
@@ -219,71 +234,6 @@ Or all connections have drained and HAProxy is finalizing the stop
 
 
 
-### haproxy config
-
-HAProxy config file looked like this after inserting a test server. Note the md5hash and version:
-
-~~~conf
-root@cf1691c5c7cf:/usr/local/etc/haproxy# cat haproxy.cfg 
-# _md5hash=1b46427730d5e4435333826727a62042
-# _version=2
-# Dataplaneapi managed File
-# changing file directly can cause a conflict if dataplaneapi is running
-
-global
-  daemon
-  maxconn 256
-  log /dev/log local0
-  log /dev/log local1 notice
-
-defaults unnamed_defaults_1
-  mode http
-  timeout connect 5s
-  timeout client 50s
-  timeout server 50s
-
-frontend db_fe from unnamed_defaults_1
-  mode tcp
-  bind *:3306
-  default_backend db_be
-
-frontend http from unnamed_defaults_1
-  bind *:80
-  default_backend app_be
-
-backend app_be from unnamed_defaults_1
-  server app1 http-echo1:5678 check
-  server app2 http-echo2:5678 check
-  server test 10.0.0.1:8888
-
-backend db_be from unnamed_defaults_1
-  mode tcp
-  server db1 mariadb:3306 check
-~~~
-
-
-
-## Next/React notes
-
-~~~bash
-npm install better-auth drizzle-orm drizzle-kit mysql2 bcryptjs dotenv jsonwebtoken
-~~~
-
-For myself because I'm learning in the process of learning React.
-
-Components:
-
-* `app/admin/backendsList.tsx`
-    - Fetches backends from the database on mount
-    - Displays them in a simple list
-    - Shows loading and empty states
-    - Loaded via `app/admin/page.tsx`
-        - Simple refreshKey state (just a number)
-        - handleBackendCreated just increments the key
-        - The BackendsList component uses the key - when it changes, React unmounts and remounts it, causing a fresh fetch
-
-
-
 
 ## LLM support
 
@@ -291,6 +241,5 @@ Components:
 
 * https://www.better-auth.com/docs/introduction
 
-Example:
 
 `Read http://localhost:3000/llms.txt and help me implement authentication in my component`
