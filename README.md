@@ -12,11 +12,15 @@ This web app is built to consume data from the `HAProxy Data Plane API`. It is b
 
 ![Admin page of the web UI](https://github.com/JoelLindberg/haproxy-webui/raw/assets/screenshots/admin.png)
 
-![Admin page of the web UI](https://github.com/JoelLindberg/haproxy-webui/raw/assets/screenshots/admin-edit-backend.png)
+**Admin panel - Edit backend (server add/remove/state)**
 
 ![Admin page - Edit backend](https://github.com/JoelLindberg/haproxy-webui/raw/assets/screenshots/admin-edit-backend.png)
 
+**Admin panel - Diagnostics and metrics**
+
 ![Admin page - Diagnostics and metrics](https://github.com/JoelLindberg/haproxy-webui/raw/assets/screenshots/admin-diag-and-metrics.png)
+
+**Admin panel - Metrics explorer and create backend**
 
 ![Admin page - Metrics explorer and create backend](https://github.com/JoelLindberg/haproxy-webui/raw/assets/screenshots/admin-metrics-explorer-and-create-be.png)
 
