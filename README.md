@@ -29,20 +29,20 @@ This web app is built to consume data from the `HAProxy Data Plane API`. It is b
 
 
 1. HAProxy Data Plane API password:
-    * Option 1: `export DATAPLANE_PASSWORD='your-secure-password'`
+    * Option 1 (same shell session as where you start docker compose): `export DATAPLANE_PASSWORD='your-secure-dataplaneapi-password'`
     * Option 2 (recommended): Create an `.env` in the root of this repo folder (same as the docker-compose file) containing:
         ~~~conf
-        DATAPLANE_PASSWORD=your-secure-password
+        DATAPLANE_PASSWORD=your-secure-dataplaneapi-password
         ~~~
 
-2. HAProxy + MariaDB: `docker compose up` (add parameter -d to run it in the background)
+2. HAProxy + MariaDB: `docker compose up -d` (the parameter -d instructs to run in the background)
     ~~~bash
     # force rebuild (required if you make changes to the haproxy config files or the haproxy api password)
     `docker compose up --build`
     ~~~
 3. `cd haproxy-webui/`
 4. `npm install`
-5. Create .env.local contains DB connection and BETTER_AUTH_SECRET.
+5. Create `.env.local` for the nextjs app. Contains configs and secrets for DB connection, HAProxy Dataplane API, better-auth and prometheus config.
     ~~~conf
     # MariaDB Database
     DB_HOST=localhost
@@ -54,7 +54,7 @@ This web app is built to consume data from the `HAProxy Data Plane API`. It is b
     # HAProxy Dataplane
     HAPROXY_DATAPLANE_BASE_URL=http://localhost:5555
     HAPROXY_DATAPLANE_USER=admin
-    HAPROXY_DATAPLANE_PASS=haproxy_dataplaneapi_password
+    HAPROXY_DATAPLANE_PASS=your-secure-dataplaneapi-password  # The same password you set in step 1 in .env (DATAPLANE_PASSWORD)
 
     # HAProxy Web UI
     # Better Auth
@@ -72,20 +72,23 @@ This web app is built to consume data from the `HAProxy Data Plane API`. It is b
 7. Prep DB for better-auth: `npx @better-auth/cli migrate`
 8. `npm run dev`
 9. Open [http://localhost:3000](http://localhost:3000) with your browser to login to the admin dashboard.
+10. Login as admin with the email address (ADMIN_EMAIL) and password (ADMIN_PASSWORD) specified in the `.env.local` file
 
 
-To add users manually:
-
-* Insert directly into the database (Better Auth uses bcrypt for password hashing)
-* Use Better Auth's CLI tools
-* Create a custom admin script
-
-
-### Create some load
+### Create some load through HAProxy
 
 Spin up locust to create some traffic:
 
 1. `docker compose -f docker-compose-locust.yml up`
+
+
+### Users
+
+There are no developed tools to add users. This is how it could be done later:
+
+* Insert directly into the database (Better Auth uses bcrypt for password hashing)
+* Use Better Auth's CLI tools
+* Create a custom admin script
 
 
 
